@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadHunter Pro — Scraper de Leads B2B</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --danger: #ff4466;
+    --warn: #ffaa00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: rgba(0,255,136,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0,255,136,0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Form elements */
+  .field {
+    margin-bottom: 18px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,255,136,0.08);
+  }
+
+  select option { background: var(--surface); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Tag chips */
+  .tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag.active {
+    background: rgba(0,255,136,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Run button */
+  .btn-run {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-run:hover { background: #00ffaa; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.25); }
+  .btn-run:active { transform: translateY(0); }
+  .btn-run:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Results panel */
+  .results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Progress */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .progress-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .progress-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* Log terminal */
+  .terminal {
+    background: #070710;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .terminal-bar {
+    background: var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .terminal-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 8px;
+  }
+
+  .terminal-body {
+    padding: 16px;
+    height: 160px;
+    overflow-y: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-ok { color: var(--accent); }
+  .log-info { color: var(--accent2); }
+  .log-warn { color: var(--warn); }
+  .log-err { color: var(--danger); }
+
+  /* Results table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .btn-export {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-export:hover { background: rgba(0,255,136,0.1); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,255,136,0.03); }
+
+  .score-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .score-high { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .score-mid { background: rgba(255,170,0,0.15); color: var(--warn); }
+  .score-low { background: rgba(255,68,102,0.15); color: var(--danger); }
+
+  .email-cell { color: var(--accent2); }
+
+  /* Idle state */
+  .idle-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 260px;
+    color: var(--muted);
+    gap: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+
+  .idle-icon { font-size: 48px; opacity: 0.3; }
+  .idle-text { font-size: 14px; }
+
+  /* Blinking cursor */
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .cursor { animation: blink 1s infinite; color: var(--accent); }
+
+  /* Pulse dot */
+  @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.5} }
+  .pulse { animation: pulse-dot 1.5s infinite; }
+
+  /* Scroll bar */
+  .terminal-body::-webkit-scrollbar { width: 4px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .terminal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @keyframes fadeSlideIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeSlideIn 0.3s ease forwards; }
+
+  .disclaimer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding: 16px 0 24px;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🎯</div>
+        <div class="logo-text">Lead<span>Hunter</span> Pro</div>
+      </div>
+      <div class="badge">B2B SCRAPER v1.0</div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <!-- LEFT: Config Panel -->
+    <div class="panel">
+      <div class="panel-title">Configuración</div>
+
+      <div class="field">
+        <label>Fuente de datos</label>
+        <select id="source">
+          <option value="linkedin">LinkedIn (Profesionales)</option>
+          <option value="google">Google Maps (Locales)</option>
+          <option value="both">Ambas fuentes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Rubro / Industria</label>
+        <input type="text" id="industry" placeholder="ej: agencias de marketing" value="agencias de marketing">
+        <div class="tag-grid" style="margin-top:10px">
+          <span class="tag" onclick="setTag(this,'inmobiliarias')">Inmobiliarias</span>
+          <span class="tag" onclick="setTag(this,'e-commerce')">E-commerce</span>
+          <span class="tag" onclick="setTag(this,'tecnología')">Tech</span>
+          <span class="tag" onclick="setTag(this,'consultoras')">Consultoras</span>
+          <span class="tag" onclick="setTag(this,'restaurantes')">Restaurantes</span>
+          <span class="tag" onclick="setTag(this,'clínicas médicas')">Salud</span>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Ciudad / País</label>
+          <input type="text" id="location" placeholder="Buenos Aires" value="Buenos Aires">
+        </div>
+        <div class="field">
+          <label>Cantidad leads</label>
+          <select id="qty">
+            <option value="25">25 leads</option>
+            <option value="50" selected>50 leads</option>
+            <option value="100">100 leads</option>
+            <option value="200">200 leads</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Datos a extraer</label>
+        <div class="tag-grid">
+          <span class="tag active" id="t-nombre">Nombre</span>
+          <span class="tag active" id="t-empresa">Empresa</span>
+          <span class="tag active" id="t-cargo">Cargo</span>
+          <span class="tag active" id="t-email">Email</span>
+          <span class="tag active" id="t-telefono">Teléfono</span>
+          <span class="tag active" id="t-linkedin">LinkedIn URL</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Filtro de cargo (opcional)</label>
+        <input type="text" id="title_filter" placeholder="ej: CEO, Director, Gerente">
+      </div>
+
+      <button class="btn-run" id="btnRun" onclick="runScraper()">
+        <span id="btnIcon">⚡</span>
+        <span id="btnText">INICIAR SCRAPER</span>
+      </button>
+    </div>
+
+    <!-- RIGHT: Results Panel -->
+    <div class="results-panel">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-found">0</div>
+          <div class="stat-label">Leads encontrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-emails">0</div>
+          <div class="stat-label">Emails válidos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-rate">0%</div>
+          <div class="stat-label">Tasa de éxito</div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+        <div class="progress-header">
+          <span class="progress-status" id="progressStatus">● Iniciando...</span>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+      </div>
+
+      <!-- Terminal Log -->
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="terminal-title">leadhunter.py — log de ejecución</span>
+        </div>
+        <div class="terminal-body" id="termBody">
+          <div class="log-line"><span class="log-time">00:00</span><span class="log-info">Sistema listo. Configurá los parámetros y presioná INICIAR.<span class="cursor">_</span></span></div>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div id="resultsArea">
+        <div class="idle-state" id="idleState">
+          <div class="idle-icon">📋</div>
+          <div class="idle-text">Los leads aparecerán aquí</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Demo interactiva — los leads generados son de ejemplo. La versión real extrae datos reales vía scraping ético + APIs públicas.
+  </div>
+</div>
+
+<script>
+// ---- Sample data pools ----
+const firstNames = ['Santiago','Valentina','Matías','Lucía','Nicolás','Florencia','Andrés','Camila','Diego','Sofía','Martín','Paula','Ignacio','Agustina','Federico','Romina','Tomás','Natalia','Leandro','Valeria'];
+const lastNames = ['García','López','Martínez','González','Rodríguez','Fernández','Pérez','Sánchez','Romero','Torres','Díaz','Álvarez','Ruiz','Moreno','Jiménez','Muñoz','Alonso','Gutiérrez','Navarro','Castro'];
+const cargos = {'CEO/Founder':['CEO','Co-founder','Fundador','Director General'],'Marketing':['Director de Marketing','CMO','Head of Marketing','Marketing Manager'],'Ventas':['Director Comercial','Gerente de Ventas','Sales Manager','Business Developer'],'Tech':['CTO','Tech Lead','Director de Tecnología'],'RRHH':['HR Manager','Head of People','Director de RRHH']};
+const emailDomains = ['gmail.com','outlook.com','yahoo.com','hotmail.com'];
+const companySuffixes = ['Group','Solutions','Digital','Agency','Consulting','Hub','Studio','Partners','Tech','Labs'];
+
+function randItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function generateLead(industry, location, idx){
+  const fn = randItem(firstNames);
+  const ln = randItem(lastNames);
+  const cargoGroup = randItem(Object.keys(cargos));
+  const cargo = randItem(cargos[cargoGroup]);
+  const industrySlug = industry.replace(/\s+/g,'').toLowerCase().slice(0,8);
+  const companyName = `${ln} ${randItem(companySuffixes)}`;
+  const hasEmail = Math.random() > 0.25;
+  const emailUser = `${fn.toLowerCase()}.${ln.toLowerCase()}`;
+  const emailDomain = Math.random() > 0.4 ? `${industrySlug}.com.ar` : randItem(emailDomains);
+  const email = hasEmail ? `${emailUser}@${emailDomain}` : '—';
+  const hasPhone = Math.random() > 0.45;
+  const phone = hasPhone ? `+54 9 11 ${randInt(1000,9999)}-${randInt(1000,9999)}` : '—';
+  const score = email !== '—' && phone !== '—' ? 'high' : email !== '—' ? 'mid' : 'low';
+  return { name:`${fn} ${ln}`, company: companyName, cargo, email, phone, score,
+    linkedin:`linkedin.com/in/${fn.toLowerCase()}-${ln.toLowerCase()}-${randInt(100,999)}` };
+}
+
+// ---- Tag toggle ----
+function setTag(el, val){
+  document.getElementById('industry').value = val;
+  document.querySelectorAll('.tag[onclick^="setTag"]').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ---- Logger ----
+let startTime = null;
+function log(msg, type='info'){
+  const body = document.getElementById('termBody');
+  const elapsed = startTime ? Math.floor((Date.now()-startTime)/1000) : 0;
+  const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const ss = String(elapsed%60).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'log-line fade-in';
+  div.innerHTML = `<span class="log-time">${mm}:${ss}</span><span class="log-${type}">${msg}</span>`;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function setProgress(pct, status){
+  document.getElementById('barFill').style.width = pct+'%';
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('progressStatus').textContent = '● '+status;
+}
+
+// ---- Main scraper simulation ----
+async function runScraper(){
+  const industry = document.getElementById('industry').value || 'empresas';
+  const location = document.getElementById('location').value || 'Argentina';
+  const qty = parseInt(document.getElementById('qty').value);
+  const source = document.getElementById('source').value;
+  const titleFilter = document.getElementById('title_filter').value;
+
+  const btn = document.getElementById('btnRun');
+  btn.disabled = true;
+  document.getElementById('btnIcon').textContent = '⏳';
+  document.getElementById('btnText').textContent = 'PROCESANDO...';
+
+  // Reset
+  document.getElementById('termBody').innerHTML = '';
+  document.getElementById('stat-found').textContent = '0';
+  document.getElementById('stat-emails').textContent = '0';
+  document.getElementById('stat-rate').textContent = '0%';
+  document.getElementById('idleState') && (document.getElementById('idleState').style.display='flex');
+  const progressWrap = document.getElementById('progressWrap');
+  progressWrap.style.display = 'block';
+
+  startTime = Date.now();
+  const leads = [];
+
+  // Simulate multi-phase scraping
+  const phases = [
+    { pct:8,  msg:`Inicializando scraper para "${industry}" en ${location}...`, type:'info', delay:400 },
+    { pct:15, msg:`Conectando a ${source === 'linkedin' ? 'LinkedIn' : source === 'google' ? 'Google Maps' : 'LinkedIn + Google Maps'}...`, type:'info', delay:600 },
+    { pct:22, msg:'Rotando proxies... OK', type:'ok', delay:300 },
+    { pct:28, msg:'Cargando user-agents... OK', type:'ok', delay:250 },
+    { pct:35, msg:`Ejecutando búsqueda: "${industry} ${location}"`, type:'info', delay:700 },
+    { pct:42, msg:`Encontrados ${qty+randInt(10,30)} perfiles candidatos`, type:'ok', delay:500 },
+    { pct:50, msg:'Filtrando resultados duplicados...', type:'info', delay:400 },
+    { pct:58, msg:`Extrayendo datos${titleFilter ? ` — filtro cargo: "${titleFilter}"` : ''}...`, type:'info', delay:800 },
+    { pct:65, msg:'Verificando emails con SMTP...', type:'info', delay:900 },
+    { pct:72, msg:`${Math.floor(qty*0.7)} emails verificados correctamente`, type:'ok', delay:400 },
+    { pct:78, msg:`${Math.floor(qty*0.08)} emails inválidos descartados`, type:'warn', delay:300 },
+    { pct:85, msg:'Enriqueciendo datos con fuentes secundarias...', type:'info', delay:700 },
+    { pct:91, msg:'Detectando teléfonos desde perfiles públicos...', type:'info', delay:500 },
+    { pct:96, msg:'Generando CSV de exportación...', type:'ok', delay:300 },
+    { pct:100, msg:`✅ Scraping completado — ${qty} leads procesados`, type:'ok', delay:200 },
+  ];
+
+  for(const phase of phases){
+    await new Promise(r=>setTimeout(r, phase.delay));
+    setProgress(phase.pct, phase.msg.replace('✅ ',''));
+    log(phase.msg, phase.type);
+  }
+
+  // Generate leads
+  for(let i=0;i<qty;i++){
+    leads.push(generateLead(industry, location, i));
+  }
+
+  // Update stats
+  const emailCount = leads.filter(l=>l.email!=='—').length;
+  const rate = Math.round(emailCount/leads.length*100);
+  animateNum('stat-found', qty);
+  animateNum('stat-emails', emailCount);
+  setTimeout(()=>{ document.getElementById('stat-rate').textContent = rate+'%'; }, 800);
+
+  // Render table
+  renderTable(leads, industry);
+
+  btn.disabled = false;
+  document.getElementById('btnIcon').textContent = '🔄';
+  document.getElementById('btnText').textContent = 'NUEVA BÚSQUEDA';
+
+  log(`Exportación lista: leads_${industry.replace(/\s/g,'_')}_${location}.csv`, 'ok');
+}
+
+function animateNum(id, target){
+  let current = 0;
+  const el = document.getElementById(id);
+  const step = Math.ceil(target/40);
+  const interval = setInterval(()=>{
+    current = Math.min(current+step, target);
+    el.textContent = current;
+    if(current>=target) clearInterval(interval);
+  }, 25);
+}
+
+function renderTable(leads, industry){
+  const area = document.getElementById('resultsArea');
+  const preview = leads.slice(0,12);
+
+  area.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Leads — ${leads.length} resultados</span>
+        <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="leadsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Empresa</th>
+              <th>Cargo</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${preview.map((l,i)=>`
+              <tr class="fade-in" style="animation-delay:${i*0.04}s">
+                <td style="color:var(--muted)">${String(i+1).padStart(2,'0')}</td>
+                <td><strong>${l.name}</strong></td>
+                <td>${l.company}</td>
+                <td style="color:var(--muted);font-size:11px">${l.cargo}</td>
+                <td class="email-cell">${l.email}</td>
+                <td>${l.phone}</td>
+                <td><span class="score-badge score-${l.score}">${l.score==='high'?'ALTO':l.score==='mid'?'MEDIO':'BAJO'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${leads.length > 12 ? `<div style="text-align:center;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)">+ ${leads.length-12} leads más en el CSV exportado</div>` : ''}
+    </div>
+  `;
+  window._leads = leads;
+}
+
+function exportCSV(){
+  if(!window._leads) return;
+  const headers = ['Nombre','Empresa','Cargo','Email','Telefono','LinkedIn','Score'];
+  const rows = window._leads.map(l=>[l.name,l.company,l.cargo,l.email,l.phone,l.linkedin,l.score]);
+  const csv = [headers,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const industry = document.getElementById('industry').value.replace(/\s/g,'_');
+  const loc = document.getElementById('location').value.replace(/\s/g,'_');
+  a.download = `leads_${industry}_${loc}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
