@@ -25,7 +25,7 @@ from datetime import datetime
 # CONFIGURACIÓN — editá estos valores antes de correr
 # ============================================================
 
-GOOGLE_API_KEY = "AIzaSyADcvhVR_UcgOHjbCa3scGzBTqiKFvVwPU"   # <-- Pegá tu API Key acá
+GOOGLE_API_KEY = ""   # <-- Pegá tu API Key acá
 
 BUSQUEDA = "agencias de marketing"    # Qué tipo de negocio buscar
 CIUDAD   = "Buenos Aires, Argentina"  # Dónde buscar
